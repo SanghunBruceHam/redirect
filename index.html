@@ -18,7 +18,21 @@
 <body>
     <p>Redirecting to <a href="https://kbo-dashboard.co.kr/">https://kbo-dashboard.co.kr/</a>...</p>
     <script>
-        window.location.href = "https://kbo-dashboard.co.kr/";
+        // Clear all session data
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Clear cache by adding timestamp parameter
+        const timestamp = new Date().getTime();
+        const targetUrl = "https://kbo-dashboard.co.kr/";
+        
+        // Redirect after clearing session and cache
+        window.location.href = targetUrl + "?_cache=" + timestamp;
     </script>
 </body>
 </html>
