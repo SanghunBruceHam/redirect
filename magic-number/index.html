@@ -3,6 +3,9 @@
 <head>
     <meta http-equiv="refresh" content="0; url=https://kbo-dashboard.co.kr/magic-number">
     <meta name="robots" content="noindex">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Redirecting...</title>
     
     <!-- Google tag (gtag.js) -->
@@ -18,21 +21,73 @@
 <body>
     <p>Redirecting to <a href="https://kbo-dashboard.co.kr/magic-number">https://kbo-dashboard.co.kr/magic-number</a>...</p>
     <script>
-        // Clear all session data
-        localStorage.clear();
-        sessionStorage.clear();
+        // Clear all storage
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Clear IndexedDB
+            if ('indexedDB' in window) {
+                indexedDB.databases().then(databases => {
+                    databases.forEach(db => {
+                        indexedDB.deleteDatabase(db.name);
+                    });
+                });
+            }
+            
+            // Clear WebSQL (legacy)
+            if ('webkitStorageInfo' in window) {
+                webkitStorageInfo.requestQuota(TEMPORARY, 0, function() {}, function() {});
+            }
+            
+            // Clear Service Worker caches
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            
+            // Unregister service workers
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+        } catch(e) {
+            console.log('Storage clearing error:', e);
+        }
         
-        // Clear cookies
-        document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        // More aggressive cookie clearing
+        const cookies = document.cookie.split(";");
+        cookies.forEach(function(cookie) {
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            const domains = [window.location.hostname, '.' + window.location.hostname];
+            const paths = ['/', window.location.pathname];
+            
+            domains.forEach(domain => {
+                paths.forEach(path => {
+                    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=' + domain + ';path=' + path;
+                    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=' + path;
+                });
+            });
         });
         
-        // Clear cache by adding timestamp parameter
+        // Force page reload with no-cache headers
         const timestamp = new Date().getTime();
         const targetUrl = "https://kbo-dashboard.co.kr/magic-number";
         
-        // Redirect after clearing session and cache
-        window.location.href = targetUrl + "?_cache=" + timestamp;
+        // Immediate redirect without cache checking
+        setTimeout(() => {
+            // Force hard reload and redirect
+            const params = new URLSearchParams();
+            params.set('_cache', timestamp);
+            params.set('_t', Math.random().toString(36));
+            params.set('_nc', Date.now());
+            params.set('_v', '2'); // Version parameter
+            
+            window.location.replace(targetUrl + "?" + params.toString());
+        }, 100);
     </script>
 </body>
 </html>
